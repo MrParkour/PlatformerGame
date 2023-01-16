@@ -52,6 +52,8 @@ class Person(pygame.sprite.Sprite):
         #     else:
         #         self.image = pygame.transform.flip(self.image, True, False)
         #         self.np = 'right'
+
+    def next_animation(self):
         if self.action == "idle":
             self.image_index += 1
             self.image = load_image(self.im_name + str(self.image_index % 3) + ".png")
@@ -63,17 +65,22 @@ if __name__ == "__main__":
 
     running = True
 
-    crs = Person(all_sprites)
+    prs = Person(all_sprites)
     all_sprites.draw(screen)
     pygame.display.flip()
     clock = pygame.time.Clock()
+
+    anim_change_tick = 0
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        crs.update()
+        if anim_change_tick % 15 == 0:
+            prs.next_animation()
+        prs.update()
         screen.fill(pygame.Color(255, 255, 255))
         all_sprites.draw(screen)
         clock.tick(60)
+        anim_change_tick += 1
         pygame.display.flip()
