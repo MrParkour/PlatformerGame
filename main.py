@@ -1,11 +1,14 @@
 import os
 import sys
 import pygame
+import time
 
 
 pygame.init()
-size = width, height = 600, 400
+size = width, height = 960, 480
 screen = pygame.display.set_mode(size)
+horizontal_borders = pygame.sprite.Group()
+vertical_borders = pygame.sprite.Group()
 
 
 def load_image(name, colorkey=None):
@@ -25,6 +28,31 @@ def load_image(name, colorkey=None):
     return image
 
 
+class Border(pygame.sprite.Sprite):
+    def __init__(self, x1, y1, x2, y2):
+        super().__init__(all_sprites)
+        if x1 == x2:
+            self.add(vertical_borders)
+            self.image = pygame.Surface([1, y2 - y1])
+            self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
+        else:
+            self.add(horizontal_borders)
+            self.image = pygame.Surface([x2 - x1, 1])
+            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
+
+
+class ExitDoor(pygame.sprite.Sprite):
+    image = load_image("/door.png")
+
+    def __init__(self, *group):
+        super().__init__(*group)
+        self.image = ExitDoor.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x = 550
+        self.rect.y = 430
+
+
 class Person(pygame.sprite.Sprite):
     image = load_image("/idle/adventurer-idle-00.png")
     im_name_idle = "/idle/adventurer-idle-0"
@@ -38,6 +66,7 @@ class Person(pygame.sprite.Sprite):
         self.rect.x = 0
         self.x_speed = 5
         self.rect.y = 5
+        self.y_speed = 5
         self.action = 'idle'
 
     def update(self, action, tick):
@@ -47,14 +76,23 @@ class Person(pygame.sprite.Sprite):
             self.next_animation(tick)
         if action == "right":
             self.action = "right"
-            if self.rect.x <= 550:
+            can_move = True
+            if pygame.sprite.collide_mask(self, exit_door) and self.rect.x < exit_door.rect.x:
+                can_move = False
+            if self.rect.x <= 915 and can_move:
                 self.rect.x += self.x_speed
             self.next_animation(tick)
         if action == "left":
             self.action = "left"
-            if self.rect.x >= 20:
+            can_move = True
+            if pygame.sprite.collide_mask(self, exit_door) and self.rect.x > exit_door.rect.x:
+                can_move = False
+            if self.rect.x >= 10 and can_move:
                 self.rect.x -= self.x_speed
             self.next_animation(tick)
+        self.rect.y += self.y_speed
+        if pygame.sprite.spritecollideany(self, horizontal_borders):
+            self.y_speed = 0
 
     def next_animation(self, tick):
         if self.action == "idle":
@@ -72,14 +110,35 @@ class Person(pygame.sprite.Sprite):
                 self.image = pygame.transform.flip(self.image, True, False)
 
 
+# class Platform(pygame.sprite.Sprite):
+#     plarform_left = load_image("/platforms/platform_left.png")
+#     def __init__(self):
+#         super().__init__(platforms)
+
+def load_background():
+    im1 = load_image("/backgrounds/background1.png")
+    screen.blit(im1, (0, 0))
+
+
 if __name__ == "__main__":
     all_sprites = pygame.sprite.Group()
     screen.fill(pygame.Color(255, 255, 255))
 
+    # creating borders
+
+    Border(0, 0, width, 0)
+    Border(0, height, width, height)
+    Border(0, 0, 0, height)
+    Border(width, 0, width, height)
+    exit_door = ExitDoor(all_sprites)
+
     running = True
 
     prs = Person(all_sprites)
+    platforms = pygame.sprite.Group()
+    all_sprites.add(exit_door)
     all_sprites.draw(screen)
+    load_background()
     pygame.display.flip()
     clock = pygame.time.Clock()
 
@@ -98,7 +157,8 @@ if __name__ == "__main__":
             if event.type == pygame.KEYUP:
                 action = "idle"
         prs.update(action, anim_change_tick)
-        screen.fill(pygame.Color(255, 255, 255))
+        exit_door.update()
+        load_background()
         all_sprites.draw(screen)
         clock.tick(60)
         anim_change_tick += 1
