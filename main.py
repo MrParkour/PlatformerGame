@@ -66,17 +66,19 @@ class Person(pygame.sprite.Sprite):
         self.rect.x = 0
         self.x_speed = 5
         self.rect.y = 5
-        self.y_speed = 5
+        self.y_speed = 4
         self.in_air = False
+        self.on_jump = False
         self.action = 'idle'
 
-    def update(self, action, tick, jumping_air):
-        in_jump = jumping_air
+    def update(self, action, tick):
         x, y = 10, 10
-        if action == "idle":
+        can_move_down = True
+        can_move_up = True
+        if "idle" in action:
             self.action = "idle"
             self.next_animation(tick)
-        if action == "right":
+        if "right" in action:
             self.action = "right"
             can_move = True
             if pygame.sprite.collide_mask(self, exit_door) and self.rect.x < exit_door.rect.x:
@@ -84,7 +86,7 @@ class Person(pygame.sprite.Sprite):
             if self.rect.x <= 915 and can_move:
                 self.rect.x += self.x_speed
             self.next_animation(tick)
-        if action == "left":
+        if "left" in action:
             self.action = "left"
             can_move = True
             if pygame.sprite.collide_mask(self, exit_door) and self.rect.x > exit_door.rect.x:
@@ -92,22 +94,24 @@ class Person(pygame.sprite.Sprite):
             if self.rect.x >= 10 and can_move:
                 self.rect.x -= self.x_speed
             self.next_animation(tick)
-        if in_jump:
-            in_jump = False
-            if not self.in_air:
+        if pygame.sprite.spritecollideany(self, horizontal_borders):
+            can_move_down = False
+        if "jump" in action:
+            if not self.on_jump and not can_move_down:
                 print("start jumping")
                 self.start_jump_tick = tick
-                self.in_air = True
-                self.y_speed = 0 - self.y_speed
-            else:
-                print(1)
-                if abs(self.start_jump_tick - tick) > 60:
-                    print("stop jumping")
-                    self.y_speed = 0 - self.y_speed
-                    self.in_air = False
-        self.rect.y += self.y_speed
-        if pygame.sprite.spritecollideany(self, horizontal_borders):
-            self.y_speed = 0
+                self.y_speed = -self.y_speed
+                self.on_jump = True
+        if self.on_jump:
+            if tick - self.start_jump_tick == 20:
+                print("end jumping")
+                self.y_speed = -self.y_speed
+            if tick - self.start_jump_tick >= 40:
+                self.on_jump = False
+        if self.y_speed > 0 and can_move_down:
+            self.rect.y += self.y_speed
+        elif self.y_speed < 0 and can_move_up:
+            self.rect.y += self.y_speed
 
     def next_animation(self, tick):
         if self.action == "idle":
@@ -171,11 +175,14 @@ if __name__ == "__main__":
                 if event.key == 275:
                     action = "right"
                 if event.key == 273:
-                    jumping = True
+                    if "jump" not in action:
+                        action += "jump"
             if event.type == pygame.KEYUP:
-                jumping = False
-                action = "idle"
-        prs.update(action, anim_change_tick, jumping)
+                if event.key == 273:
+                    action = action.rstrip("jump")
+                else:
+                    action = "idle"
+        prs.update(action, anim_change_tick)
         exit_door.update()
         load_background()
         all_sprites.draw(screen)
