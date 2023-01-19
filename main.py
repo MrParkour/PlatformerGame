@@ -63,6 +63,7 @@ class Person(pygame.sprite.Sprite):
         super().__init__(*group)
         self.image = Person.image
         self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = 0
         self.x_speed = 5
         self.rect.y = 5
@@ -71,6 +72,30 @@ class Person(pygame.sprite.Sprite):
         self.on_jump = False
         self.action = 'idle'
 
+    def colide_side(self, obj):
+        side = ""
+        in_x = False
+        in_y = False
+        if pygame.sprite.collide_mask(self, obj):
+            # if self.rect.x + self.rect.width >= obj.rect.x and obj.rect.x + obj.rect.width > self.rect.x: in_x = True
+            # if self.rect.y > obj.rect.y + obj.rect.height and self.rect.y + self.rect.height < obj.rect.y: print(1)
+            if self.rect.x >= obj.rect.x + obj.rect.width:
+                side += "left"
+            elif self.rect.x + self.rect.width <= obj.rect.x:
+                side += "right"
+            if self.rect.y >= obj.rect.y:
+                side += "top"
+            elif self.rect.y <= obj.rect.y:
+                side += "bottom"
+        return side
+
+    def can_go_side(self, side):
+        if pygame.sprite.spritecollide(self, platforms, False) != []:
+            for platform in pygame.sprite.spritecollide(self, platforms, False):
+                if side in self.colide_side(platform):
+                    return False
+        return True
+
     def update(self, action, tick):
         x, y = 10, 10
         can_move_down = True
@@ -78,33 +103,49 @@ class Person(pygame.sprite.Sprite):
         if "idle" in action:
             self.action = "idle"
             self.next_animation(tick)
+
+        # Checking that playet can go RIGHT
+
         if "right" in action:
             self.action = "right"
             can_move = True
+            if not self.can_go_side("right"):
+                can_move = False
             if pygame.sprite.collide_mask(self, exit_door) and self.rect.x < exit_door.rect.x:
                 can_move = False
             if self.rect.x <= 915 and can_move:
                 self.rect.x += self.x_speed
             self.next_animation(tick)
+
+        # Chechking that player can go LEFT
+
         if "left" in action:
             self.action = "left"
             can_move = True
+            if not self.can_go_side("left"):
+                can_move = False
             if pygame.sprite.collide_mask(self, exit_door) and self.rect.x > exit_door.rect.x:
                 can_move = False
             if self.rect.x >= 10 and can_move:
                 self.rect.x -= self.x_speed
             self.next_animation(tick)
+
+        # Checking that can player GO DOWN(Fall)
+
         if pygame.sprite.spritecollideany(self, horizontal_borders):
             can_move_down = False
+        if not self.can_go_side("bottom"):
+            can_move_down = False
+
+        # DO JUMP
+
         if "jump" in action:
             if not self.on_jump and not can_move_down:
-                print("start jumping")
                 self.start_jump_tick = tick
                 self.y_speed = -self.y_speed
                 self.on_jump = True
         if self.on_jump:
             if tick - self.start_jump_tick == 20:
-                print("end jumping")
                 self.y_speed = -self.y_speed
             if tick - self.start_jump_tick >= 40:
                 self.on_jump = False
@@ -129,10 +170,16 @@ class Person(pygame.sprite.Sprite):
                 self.image = pygame.transform.flip(self.image, True, False)
 
 
-# class Platform(pygame.sprite.Sprite):
-#     plarform_left = load_image("/platforms/platform_left.png")
-#     def __init__(self):
-#         super().__init__(platforms)
+class Platform(pygame.sprite.Sprite):
+    plarform_left = load_image("/platforms/platform1.png")
+
+    def __init__(self, x, y, width, height):
+        super().__init__(platforms)
+        self.image = Platform.plarform_left
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
 
 def load_background():
     im1 = load_image("/backgrounds/background1.png")
@@ -155,7 +202,9 @@ if __name__ == "__main__":
 
     prs = Person(all_sprites)
     platforms = pygame.sprite.Group()
+    p1 = Platform(300, 400, 100, 50)
     all_sprites.add(exit_door)
+    platforms.draw(screen)
     all_sprites.draw(screen)
     load_background()
     pygame.display.flip()
@@ -185,6 +234,7 @@ if __name__ == "__main__":
         prs.update(action, anim_change_tick)
         exit_door.update()
         load_background()
+        platforms.draw(screen)
         all_sprites.draw(screen)
         clock.tick(60)
         anim_change_tick += 1
