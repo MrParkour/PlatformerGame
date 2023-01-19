@@ -58,17 +58,18 @@ class Person(pygame.sprite.Sprite):
     im_name_idle = "/idle/adventurer-idle-0"
     im_name_run = "/running/adventurer-run-0"
     image_index = 0
+    air_images = [load_image("/falls/adventurer-fall-00.png"), load_image("/falls/adventurer-fall-01.png")]
 
     def __init__(self, *group):
         super().__init__(*group)
         self.image = Person.image
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect.x = 0
+        self.rect.x = 250
         self.x_speed = 5
-        self.rect.y = 5
+        self.rect.y = 410
         self.y_speed = 4
-        self.in_air = False
+        self.on_air = False
         self.on_jump = False
         self.action = 'idle'
 
@@ -77,15 +78,14 @@ class Person(pygame.sprite.Sprite):
         in_x = False
         in_y = False
         if pygame.sprite.collide_mask(self, obj):
-            # if self.rect.x + self.rect.width >= obj.rect.x and obj.rect.x + obj.rect.width > self.rect.x: in_x = True
-            # if self.rect.y > obj.rect.y + obj.rect.height and self.rect.y + self.rect.height < obj.rect.y: print(1)
-            if self.rect.x >= obj.rect.x + obj.rect.width:
+            # print(self.rect.x, self.rect.y, obj.rect.x, obj.rect.y, ' ---- ', self.rect.x + self.rect.width, self.rect.y + self.rect.height, obj.rect.x + obj.rect.width, obj.rect.y + obj.rect.height)
+            if self.rect.x >= obj.rect.x and not (self.rect.y + self.rect.height - 6 <= obj.rect.y):
                 side += "left"
-            elif self.rect.x + self.rect.width <= obj.rect.x:
+            elif self.rect.x <= obj.rect.x and not (self.rect.y + self.rect.height - 6 <= obj.rect.y):
                 side += "right"
-            if self.rect.y >= obj.rect.y:
+            if self.rect.y >= obj.rect.y and not (self.rect.x + self.rect.width - 20 <= obj.rect.x) and not (self.rect.x >= obj.rect.x + obj.rect.width - 18):
                 side += "top"
-            elif self.rect.y <= obj.rect.y:
+            elif self.rect.y <= obj.rect.y and not (self.rect.x >= obj.rect.x + obj.rect.width):
                 side += "bottom"
         return side
 
@@ -112,6 +112,7 @@ class Person(pygame.sprite.Sprite):
             if not self.can_go_side("right"):
                 can_move = False
             if pygame.sprite.collide_mask(self, exit_door) and self.rect.x < exit_door.rect.x:
+                print("You can exit!")
                 can_move = False
             if self.rect.x <= 915 and can_move:
                 self.rect.x += self.x_speed
@@ -125,6 +126,7 @@ class Person(pygame.sprite.Sprite):
             if not self.can_go_side("left"):
                 can_move = False
             if pygame.sprite.collide_mask(self, exit_door) and self.rect.x > exit_door.rect.x:
+                print("You can exit!")
                 can_move = False
             if self.rect.x >= 10 and can_move:
                 self.rect.x -= self.x_speed
@@ -134,8 +136,23 @@ class Person(pygame.sprite.Sprite):
 
         if pygame.sprite.spritecollideany(self, horizontal_borders):
             can_move_down = False
+        if pygame.sprite.collide_mask(self, exit_door) and self.rect.y < exit_door.rect.y:
+                print("You can exit!")
+                can_move_down = False
+                self.on_air = False
         if not self.can_go_side("bottom"):
             can_move_down = False
+            self.on_air = False
+
+        # Checking that player can GO UP
+
+        # if pygame.sprite.spritecollideany(self, horizontal_borders):
+        #  can_move_up = False
+        if pygame.sprite.collide_mask(self, exit_door) and self.rect.y < exit_door.rect.y:
+                print("You can exit!")
+                can_move_up = False
+        if not self.can_go_side("top"):
+            can_move_up = False
 
         # DO JUMP
 
@@ -143,11 +160,15 @@ class Person(pygame.sprite.Sprite):
             if not self.on_jump and not can_move_down:
                 self.start_jump_tick = tick
                 self.y_speed = -self.y_speed
+                self.on_air = False
                 self.on_jump = True
         if self.on_jump:
             if tick - self.start_jump_tick == 20:
+                self.on_air = True
+                print(self.on_air)
                 self.y_speed = -self.y_speed
             if tick - self.start_jump_tick >= 40:
+                self.on_air = False
                 self.on_jump = False
         if self.y_speed > 0 and can_move_down:
             self.rect.y += self.y_speed
@@ -168,6 +189,15 @@ class Person(pygame.sprite.Sprite):
                 self.image_index += 1
                 self.image = load_image(self.im_name_run + str(self.image_index % 6) + ".png")
                 self.image = pygame.transform.flip(self.image, True, False)
+        if self.on_air:
+            if self.action == "right":
+                if tick % 5 == 0:
+                    self.image_index += 1
+                    self.image = Person.air_images[self.image_index % 2]
+            else:
+                if tick % 5 == 0:
+                    self.image_index += 1
+                    self.image = pygame.transform.flip(Person.air_images[self.image_index % 2], True, False)
 
 
 class Platform(pygame.sprite.Sprite):
@@ -202,7 +232,7 @@ if __name__ == "__main__":
 
     prs = Person(all_sprites)
     platforms = pygame.sprite.Group()
-    p1 = Platform(300, 400, 100, 50)
+    p1 = Platform(150, 250, 100, 50)
     all_sprites.add(exit_door)
     platforms.draw(screen)
     all_sprites.draw(screen)
