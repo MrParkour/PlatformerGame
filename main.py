@@ -6,6 +6,7 @@ import time
 
 pygame.init()
 size = width, height = 960, 480
+coins = 0
 screen = pygame.display.set_mode(size)
 horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
@@ -39,6 +40,28 @@ class Border(pygame.sprite.Sprite):
             self.add(horizontal_borders)
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
+
+
+class Bullet(pygame.sprite.Sprite):
+    image = load_image("/bullet.png")
+
+    def __init__(self, side):
+        self.image = Bullet.image
+        self.rect = self.image.get_rect()
+        if side == "right":
+            self.rect.x = prs.rect.x + 30
+            self.rect.y = prs.rect.y
+            self.x_speed = 10
+        elif side == "left":
+            self.rect.x = prs.rect.x - 5
+            self.rect.y = prs.rect.y
+            self.image = pygame.transform.flip(self.image, True, False)
+            self.x_speed = 10
+
+    def update(self):
+        if pygame.sprite.spritecollide(self, enemy, False) != []:
+            if pygame.sprite.spritecollide(self, enemy, True):
+                coins += 1
 
 
 class ExitDoor(pygame.sprite.Sprite):
@@ -232,6 +255,7 @@ if __name__ == "__main__":
 
     prs = Person(all_sprites)
     platforms = pygame.sprite.Group()
+    enemy = pygame.sprite.Group()
     p1 = Platform(150, 250, 100, 50)
     all_sprites.add(exit_door)
     platforms.draw(screen)
