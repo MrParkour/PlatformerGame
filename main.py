@@ -2,6 +2,7 @@ import os
 import sys
 import pygame
 import time
+import random
 
 
 pygame.init()
@@ -10,6 +11,8 @@ coins = 0
 screen = pygame.display.set_mode(size)
 horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
+wallpaper_x = 0
+wallpaper_y = 0
 
 
 def load_image(name, colorkey=None):
@@ -27,6 +30,19 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+im1 = load_image("/backgrounds/background1.png")
+os1 = load_image("/platforms/osnova.png", (255, 255, 255))
+end_game = False
+
+
+def exit_from_level():
+    # initialazing exit window
+    for sprite in all_sprites:
+        sprite.kill()
+    for plat in platforms:
+        plat.kill()
 
 
 class Border(pygame.sprite.Sprite):
@@ -73,7 +89,7 @@ class ExitDoor(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = 550
-        self.rect.y = 430
+        self.rect.y = 400
 
 
 class Person(pygame.sprite.Sprite):
@@ -120,6 +136,7 @@ class Person(pygame.sprite.Sprite):
         return True
 
     def update(self, action, tick):
+        global end_game
         x, y = 10, 10
         can_move_down = True
         can_move_up = True
@@ -135,7 +152,6 @@ class Person(pygame.sprite.Sprite):
             if not self.can_go_side("right"):
                 can_move = False
             if pygame.sprite.collide_mask(self, exit_door) and self.rect.x < exit_door.rect.x:
-                print("You can exit!")
                 can_move = False
             if self.rect.x <= 915 and can_move:
                 self.rect.x += self.x_speed
@@ -149,7 +165,6 @@ class Person(pygame.sprite.Sprite):
             if not self.can_go_side("left"):
                 can_move = False
             if pygame.sprite.collide_mask(self, exit_door) and self.rect.x > exit_door.rect.x:
-                print("You can exit!")
                 can_move = False
             if self.rect.x >= 10 and can_move:
                 self.rect.x -= self.x_speed
@@ -160,7 +175,6 @@ class Person(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, horizontal_borders):
             can_move_down = False
         if pygame.sprite.collide_mask(self, exit_door) and self.rect.y < exit_door.rect.y:
-                print("You can exit!")
                 can_move_down = False
                 self.on_air = False
         if not self.can_go_side("bottom"):
@@ -172,7 +186,6 @@ class Person(pygame.sprite.Sprite):
         # if pygame.sprite.spritecollideany(self, horizontal_borders):
         #  can_move_up = False
         if pygame.sprite.collide_mask(self, exit_door) and self.rect.y < exit_door.rect.y:
-                print("You can exit!")
                 can_move_up = False
         if not self.can_go_side("top"):
             can_move_up = False
@@ -197,6 +210,9 @@ class Person(pygame.sprite.Sprite):
             self.rect.y += self.y_speed
         elif self.y_speed < 0 and can_move_up:
             self.rect.y += self.y_speed
+        if pygame.sprite.collide_mask(self, exit_door):
+            exit_from_level()
+            end_game = True
 
     def next_animation(self, tick):
         if self.action == "idle":
@@ -224,19 +240,48 @@ class Person(pygame.sprite.Sprite):
 
 
 class Platform(pygame.sprite.Sprite):
-    plarform_left = load_image("/platforms/platform1.png")
-
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, image):
+        plarform_left = load_image(image, (255, 255, 255))
         super().__init__(platforms)
-        self.image = Platform.plarform_left
+        if image == "/platforms/floor.png":
+            r = random.randint(0, 3)
+            self.image = plarform_left.subsurface(r * 32, 0, 32, 32)
+        else:
+            self.image = plarform_left
+        # self.image = pygame.transform.scale(Platform.plarform_left, (width, height))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
 
+f1 = pygame.font.Font("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/fonts/pixel_font_sonic.ttf", 40)
+text1 = f1.render("Уровень пройден", False, (109, 93, 93))
+text2 = f1.render("Время ", False, (109, 93, 93))
+
+
+def animation_background(tick, end_time):
+    global wallpaper_x
+    if tick % 2 == 0:
+        wallpaper_x -= 5
+        if wallpaper_x == -960:
+            wallpaper_x = 0
+        screen.blit(im1, (wallpaper_x, 0))
+        screen.blit(im1, (wallpaper_x + 960, 0))
+    place = text1.get_rect(center=(480, 150))
+    text2 = f1.render("Время " + str(round(end_time, 3)), False, (109, 93, 93))
+    place2 = text2.get_rect(center=(480, 220))
+    screen.blit(text1, place)
+    screen.blit(text2, place2)
+
+
 def load_background():
-    im1 = load_image("/backgrounds/background1.png")
     screen.blit(im1, (0, 0))
+    screen.blit(os1, (160, 360))
+    screen.blit(os1, (160, 408))
+    screen.blit(os1, (160, 456))
+    screen.blit(os1, (260, 360))
+    screen.blit(os1, (260, 408))
+    screen.blit(os1, (260, 456))
 
 
 if __name__ == "__main__":
@@ -256,7 +301,8 @@ if __name__ == "__main__":
     prs = Person(all_sprites)
     platforms = pygame.sprite.Group()
     enemy = pygame.sprite.Group()
-    p1 = Platform(150, 250, 100, 50)
+    p1 = Platform(0, 400, 100, 50, "/platforms/platform1.png")
+    p2 = Platform(150, 350, 100, 50, "/platforms/platform2.png")
     all_sprites.add(exit_door)
     platforms.draw(screen)
     all_sprites.draw(screen)
@@ -268,6 +314,16 @@ if __name__ == "__main__":
     action = "idle"
     jumping = False
 
+    # creating floor
+
+    start_x = 0
+    y = 480 - 32
+    while start_x < 960:
+        Platform(start_x, y, 32, 32, "/platforms/floor.png")
+        start_x += 32
+
+    start_time = time.time()
+    time_showed = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -280,6 +336,8 @@ if __name__ == "__main__":
                 if event.key == 273:
                     if "jump" not in action:
                         action += "jump"
+                if event.key == 32:
+                    action += "shoot"
             if event.type == pygame.KEYUP:
                 if event.key == 273:
                     action = action.rstrip("jump")
@@ -287,7 +345,15 @@ if __name__ == "__main__":
                     action = "idle"
         prs.update(action, anim_change_tick)
         exit_door.update()
-        load_background()
+        if not end_game:
+            load_background()
+        else:
+            if not time_showed:
+                end_time = time.time()
+                animation_background(anim_change_tick, end_time - start_time)
+                time_showed = True
+            else:
+                animation_background(anim_change_tick, end_time - start_time)
         platforms.draw(screen)
         all_sprites.draw(screen)
         clock.tick(60)
