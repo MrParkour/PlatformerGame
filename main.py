@@ -83,13 +83,13 @@ class Bullet(pygame.sprite.Sprite):
 class ExitDoor(pygame.sprite.Sprite):
     image = load_image("/door.png")
 
-    def __init__(self, *group):
+    def __init__(self, x, y, *group):
         super().__init__(*group)
         self.image = ExitDoor.image
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect.x = 550
-        self.rect.y = 400
+        self.rect.x = x
+        self.rect.y = y
 
 
 class Person(pygame.sprite.Sprite):
@@ -106,7 +106,7 @@ class Person(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = 250
         self.x_speed = 5
-        self.rect.y = 410
+        self.rect.y = 350
         self.y_speed = 4
         self.on_air = False
         self.on_jump = False
@@ -240,27 +240,109 @@ class Person(pygame.sprite.Sprite):
 
 
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, image):
+    def __init__(self, x, y, width, height, image, orien=None):
         plarform_left = load_image(image, (255, 255, 255))
         super().__init__(platforms)
         if image == "/platforms/floor.png":
-            r = random.randint(0, 3)
+            if orien == "down":
+                r = random.randint(0, 2)
+                self.image = plarform_left.subsurface(r * 32, 0, 32, 32)
+                self.image = pygame.transform.flip(self.image, False, True)
+            elif orien == "left":
+                r = random.randint(0, 2)
+                self.image = plarform_left.subsurface(r * 32, 0, 32, 32)
+                self.image = pygame.transform.rotate(self.image, 90)
+            elif orien == "right":
+                r = random.randint(0, 2)
+                self.image = plarform_left.subsurface(r * 32, 0, 32, 32)
+                self.image = pygame.transform.rotate(self.image, 270)
+            elif orien == "up":
+                r = random.randint(0, 2)
+                self.image = plarform_left.subsurface(r * 32, 0, 32, 32)
+            elif orien == "rightup":
+                self.image = load_image("/platforms/side_floor.png", (255, 255, 255))
+            elif orien == "leftup":
+                self.image = load_image("/platforms/side_floor.png", (255, 255, 255))
+                self.image = pygame.transform.flip(self.image, True, False)
+            elif orien == "leftdown":
+                self.image = load_image("/platforms/side_floor.png", (255, 255, 255))
+                self.image = pygame.transform.flip(self.image, True, True)
+            elif orien == "rightdown":
+                self.image = load_image("/platforms/side_floor.png", (255, 255, 255))
+                self.image = pygame.transform.flip(self.image, False, True)
+            else:
+                self.image = load_image("/platforms/side_floor.png", (255, 255, 255))
+        elif image == "/platforms/back_floor.png":
+            r = random.randint(0, 2)
             self.image = plarform_left.subsurface(r * 32, 0, 32, 32)
+            self.image = pygame.transform.rotate(self.image, random.randint(0, 3) * 90)
         else:
             self.image = plarform_left
-        # self.image = pygame.transform.scale(Platform.plarform_left, (width, height))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
 
 f1 = pygame.font.Font("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/fonts/pixel_font_sonic.ttf", 40)
+f2 = pygame.font.Font("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/fonts/pixel_font_sonic.ttf", 20)
 text1 = f1.render("Уровень пройден", False, (109, 93, 93))
 text2 = f1.render("Время ", False, (109, 93, 93))
 
 
+def create_lvl(file):
+    fname = open("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/levels/lvl1.txt")
+    with fname as f:
+        lvl = f.read()
+        lvl = lvl.split('\n')
+    for x in range(1, len(lvl) - 1):
+        for y in range(1, len(lvl[x]) - 1):
+            if lvl[x][y] == '1':
+                # s = ""
+                # if lvl[x + 1][y] == '0':
+                #     s += "down"
+                # if lvl[x][y + 1] == '0':
+                #     s += "right"
+                # if lvl[x - 1][y] == '0':
+                #     s += "up"
+                # if lvl[x][y - 1] == '0':
+                #     s += "left"
+                s = "up"
+                Platform(y * 32, x * 32, 32, 32, "/platforms/floor.png", s)
+            if lvl[x][y] == '3':
+                s = "down"
+                Platform(y * 32, x * 32, 32, 32, "/platforms/floor.png", s)
+            if lvl[x][y] == '4':
+                s = "right"
+                Platform(y * 32, x * 32, 32, 32, "/platforms/floor.png", s)
+            if lvl[x][y] == '5':
+                s = "left"
+                Platform(y * 32, x * 32, 32, 32, "/platforms/floor.png", s)
+            if lvl[x][y] == '6':
+                s = "rightup"
+                Platform(y * 32, x * 32, 32, 32, "/platforms/floor.png", s)
+            if lvl[x][y] == '7':
+                s = "leftup"
+                Platform(y * 32, x * 32, 32, 32, "/platforms/floor.png", s)
+            if lvl[x][y] == '8':
+                s = "leftdown"
+                Platform(y * 32, x * 32, 32, 32, "/platforms/floor.png", s)
+            if lvl[x][y] == '9':
+                s = "rightdown"
+                Platform(y * 32, x * 32, 32, 32, "/platforms/floor.png", s)
+            if lvl[x][y] == '2':
+                Platform(y * 32, x * 32, 32, 32, "/platforms/back_floor.png")
+    for y in range(15):
+        Platform(0, y * 32, 32, 32, "/platforms/back_floor.png")
+        Platform(960 - 32, y * 32, 32, 32, "/platforms/back_floor.png")
+
+    for x in range(0, 30):
+        Platform(x * 32, 0, 32, 32, "/platforms/back_floor.png")
+        Platform(x * 32, 480 - 32, 32, 32, "/platforms/back_floor.png")
+        print('1' + str(x))
+
+
 def animation_background(tick, end_time):
-    global wallpaper_x
+    global wallpaper_x, text3, text4, place3, place4
     if tick % 2 == 0:
         wallpaper_x -= 5
         if wallpaper_x == -960:
@@ -269,22 +351,36 @@ def animation_background(tick, end_time):
         screen.blit(im1, (wallpaper_x + 960, 0))
     place = text1.get_rect(center=(480, 150))
     text2 = f1.render("Время " + str(round(end_time, 3)), False, (109, 93, 93))
+    text3 = f2.render("Начать заново", False, (109, 93, 93))
+    text4 = f2.render("Следующий уровень", False, (109, 93, 93))
     place2 = text2.get_rect(center=(480, 220))
+    place3 = text3.get_rect(center=(240, 300))
+    place4 = text3.get_rect(center=(720, 300))
     screen.blit(text1, place)
     screen.blit(text2, place2)
+    screen.blit(text3, place3)
+    screen.blit(text4, place4)
 
 
 def load_background():
     screen.blit(im1, (0, 0))
-    screen.blit(os1, (160, 360))
-    screen.blit(os1, (160, 408))
-    screen.blit(os1, (160, 456))
-    screen.blit(os1, (260, 360))
-    screen.blit(os1, (260, 408))
-    screen.blit(os1, (260, 456))
+    screen.blit(os1, (160, 215))
+    screen.blit(os1, (160, 253))
+    screen.blit(os1, (160, 301))
+    screen.blit(os1, (260, 215))
+    screen.blit(os1, (260, 253))
+    screen.blit(os1, (260, 301))
+    screen.blit(os1, (260, 349))
+    screen.blit(os1, (260, 397))
+    # screen.blit(os1, (160, 408))
+    # screen.blit(os1, (160, 456))
+    # screen.blit(os1, (260, 360))
+    # screen.blit(os1, (260, 408))
+    # screen.blit(os1, (260, 456))
 
 
-if __name__ == "__main__":
+def create_lvl1_game():
+    global all_sprites, exit_door, running, prs, platforms, enemy, p2, clock, anim_change_tick, action, jumping, start_time, time_showed, end_game
     all_sprites = pygame.sprite.Group()
     screen.fill(pygame.Color(255, 255, 255))
 
@@ -294,18 +390,19 @@ if __name__ == "__main__":
     Border(0, height, width, height)
     Border(0, 0, 0, height)
     Border(width, 0, width, height)
-    exit_door = ExitDoor(all_sprites)
+    exit_door = ExitDoor(860, 300, all_sprites)
 
     running = True
 
     prs = Person(all_sprites)
     platforms = pygame.sprite.Group()
     enemy = pygame.sprite.Group()
-    p1 = Platform(0, 400, 100, 50, "/platforms/platform1.png")
-    p2 = Platform(150, 350, 100, 50, "/platforms/platform2.png")
+    # p1 = Platform(0, 400, 100, 50, "/platforms/platform1.png")
+    p2 = Platform(150, 200, 100, 50, "/platforms/platform2.png")
     all_sprites.add(exit_door)
     platforms.draw(screen)
     all_sprites.draw(screen)
+    create_lvl("dsadsa")
     load_background()
     pygame.display.flip()
     clock = pygame.time.Clock()
@@ -313,14 +410,6 @@ if __name__ == "__main__":
     anim_change_tick = 0
     action = "idle"
     jumping = False
-
-    # creating floor
-
-    start_x = 0
-    y = 480 - 32
-    while start_x < 960:
-        Platform(start_x, y, 32, 32, "/platforms/floor.png")
-        start_x += 32
 
     start_time = time.time()
     time_showed = False
@@ -343,6 +432,14 @@ if __name__ == "__main__":
                     action = action.rstrip("jump")
                 else:
                     action = "idle"
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if end_game:
+                    x, y = event.pos
+                    if place3.x < x < place3.x + place3.width and place4.y < y < place4.y + place4.height:
+                        end_game = False
+                        create_lvl1_game()
+                    if place4.x < x < place4.x + place4.width and place4.y < y < place4.y + place4.height:
+                        quit()
         prs.update(action, anim_change_tick)
         exit_door.update()
         if not end_game:
@@ -359,3 +456,7 @@ if __name__ == "__main__":
         clock.tick(60)
         anim_change_tick += 1
         pygame.display.flip()
+
+
+if __name__ == "__main__":
+    create_lvl1_game()
