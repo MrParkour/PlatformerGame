@@ -16,7 +16,7 @@ wallpaper_y = 0
 
 
 def load_image(name, colorkey=None):
-    fullname = "c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data"
+    fullname = "data"
     fullname += name
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
@@ -283,14 +283,14 @@ class Platform(pygame.sprite.Sprite):
         self.rect.y = y
 
 
-f1 = pygame.font.Font("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/fonts/pixel_font_sonic.ttf", 40)
-f2 = pygame.font.Font("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/fonts/pixel_font_sonic.ttf", 20)
+f1 = pygame.font.Font("data/fonts/pixel_font_sonic.ttf", 40)
+f2 = pygame.font.Font("data/fonts/pixel_font_sonic.ttf", 20)
 text1 = f1.render("Уровень пройден", False, (109, 93, 93))
 text2 = f1.render("Время ", False, (109, 93, 93))
 
 
 def create_lvl(file):
-    fname = open("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/levels/lvl1.txt")
+    fname = open("data/levels/lvl1.txt")
     with fname as f:
         lvl = f.read()
         lvl = lvl.split('\n')
