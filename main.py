@@ -283,14 +283,14 @@ class Platform(pygame.sprite.Sprite):
         self.rect.y = y
 
 
-f1 = pygame.font.Font("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/fonts/pixel_font_sonic.ttf", 40)
-f2 = pygame.font.Font("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/fonts/pixel_font_sonic.ttf", 20)
+f1 = pygame.font.Font("data/fonts/pixel_font_sonic.ttf", 40)
+f2 = pygame.font.Font("data/fonts/pixel_font_sonic.ttf", 20)
 text1 = f1.render("Уровень пройден", False, (109, 93, 93))
 text2 = f1.render("Время ", False, (109, 93, 93))
 
 
 def create_lvl(file):
-    fname = open("c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data/levels/lvl1.txt")
+    fname = open("data/levels/lvl1.txt")
     with fname as f:
         lvl = f.read()
         lvl = lvl.split('\n')
@@ -418,17 +418,19 @@ def create_lvl1_game():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == 276:
+                print(event.unicode, '=')
+                if event.unicode == "a":
                     action = "left"
-                if event.key == 275:
+                if event.unicode == "d":
                     action = "right"
-                if event.key == 273:
+                if event.unicode == "w":
                     if "jump" not in action:
                         action += "jump"
-                if event.key == 32:
+                if event.unicode == " ":
                     action += "shoot"
             if event.type == pygame.KEYUP:
-                if event.key == 273:
+                print(event)
+                if event.key == 119:
                     action = action.rstrip("jump")
                 else:
                     action = "idle"
