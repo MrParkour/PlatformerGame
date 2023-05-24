@@ -13,6 +13,7 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 wallpaper_x = 0
 wallpaper_y = 0
+w_key_code = -1
 
 
 def load_image(name, colorkey=None):
@@ -26,6 +27,8 @@ def load_image(name, colorkey=None):
         image = image.convert()
         if colorkey == -1:
             colorkey = image.get_at((0, 0))
+            print(colorkey)
+            colorkey = (0, 0, 0)
         image.set_colorkey(colorkey)
     else:
         image = image.convert_alpha()
@@ -118,14 +121,17 @@ class Person(pygame.sprite.Sprite):
         in_y = False
         if pygame.sprite.collide_mask(self, obj):
             # print(self.rect.x, self.rect.y, obj.rect.x, obj.rect.y, ' ---- ', self.rect.x + self.rect.width, self.rect.y + self.rect.height, obj.rect.x + obj.rect.width, obj.rect.y + obj.rect.height)
-            if self.rect.x >= obj.rect.x and not (self.rect.y + self.rect.height - 6 <= obj.rect.y):
+            if self.rect.x > obj.rect.x and not (self.rect.y + self.rect.height - 6 <= obj.rect.y):
                 side += "left"
             elif self.rect.x <= obj.rect.x and not (self.rect.y + self.rect.height - 6 <= obj.rect.y):
                 side += "right"
-            if self.rect.y >= obj.rect.y and not (self.rect.x + self.rect.width - 20 <= obj.rect.x) and not (self.rect.x >= obj.rect.x + obj.rect.width - 18):
+            # if self.rect.y >= obj.rect.y and not (self.rect.x + self.rect.width - 20 <= obj.rect.x) and not (self.rect.x >= obj.rect.x + obj.rect.width - 18):
+            if self.rect.y >= obj.rect.y and (obj.rect.x - self.rect.width <= self.rect.x + 5<= obj.rect.x + obj.rect.width):
+                print(self.rect.x, self.rect.y, ' --- ', obj.rect.x + obj.rect.width, obj.rect.y)
                 side += "top"
-            elif self.rect.y <= obj.rect.y and not (self.rect.x >= obj.rect.x + obj.rect.width):
+            elif self.rect.y <= obj.rect.y and (obj.rect.x - self.rect.width <= self.rect.x + 5<= obj.rect.x + obj.rect.width):
                 side += "bottom"
+        # print(side)
         return side
 
     def can_go_side(self, side):
@@ -201,7 +207,7 @@ class Person(pygame.sprite.Sprite):
         if self.on_jump:
             if tick - self.start_jump_tick == 20:
                 self.on_air = True
-                print(self.on_air)
+                # print(self.on_air)
                 self.y_speed = -self.y_speed
             if tick - self.start_jump_tick >= 40:
                 self.on_air = False
@@ -222,7 +228,7 @@ class Person(pygame.sprite.Sprite):
         elif self.action == "right":
             if tick % 10 == 0:
                 self.image_index += 1
-                self.image = load_image(self.im_name_run + str(self.image_index % 6) + ".png")
+                self.image = load_image(self.im_name_run + str(self.image_index % 6) + ".png", colorkey=(0, 0, 0))
         elif self.action == "left":
             if tick % 10 == 0:
                 self.image_index += 1
@@ -338,7 +344,7 @@ def create_lvl(file):
     for x in range(0, 30):
         Platform(x * 32, 0, 32, 32, "/platforms/back_floor.png")
         Platform(x * 32, 480 - 32, 32, 32, "/platforms/back_floor.png")
-        print('1' + str(x))
+        # print('1' + str(x))
 
 
 def animation_background(tick, end_time):
@@ -413,24 +419,26 @@ def create_lvl1_game():
 
     start_time = time.time()
     time_showed = False
+    w_key_code = 0
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
-                print(event.unicode, '=')
+                # print(event.unicode, '=')
                 if event.unicode == "a":
                     action = "left"
                 if event.unicode == "d":
                     action = "right"
                 if event.unicode == "w":
+                    w_key_code = event.key
                     if "jump" not in action:
                         action += "jump"
                 if event.unicode == " ":
                     action += "shoot"
             if event.type == pygame.KEYUP:
-                print(event)
-                if event.key == 119:
+                # print(event)
+                if event.key == w_key_code:
                     action = action.rstrip("jump")
                 else:
                     action = "idle"
