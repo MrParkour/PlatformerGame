@@ -17,7 +17,7 @@ w_key_code = -1
 
 
 def load_image(name, colorkey=None):
-    fullname = "c:/Users/Roma/Documents/yandex_lyceum/platformer_project/data"
+    fullname = "data"
     fullname += name
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
